@@ -4,6 +4,7 @@ import AppLayout from '../components/Layout';
 import Home from '../pages/Home';
 import About from '../pages/About';
 import Canvas from '../pages/Canvas';
+import Notice from '../pages/Notice';
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
       {
         path: 'canvas',
         element: <Canvas />,
+      },
+      {
+        path: 'notice',
+        element: <Notice />,
       },
     ],
   },

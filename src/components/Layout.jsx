@@ -31,6 +31,10 @@ const AppLayout = () => {
               key: '3',
               label: <Link to="/canvas">Canvas</Link>,
             },
+            {
+              key: '4',
+              label: <Link to="/notice">공지사항</Link>,
+            },
           ]}
         />
       </Header>
