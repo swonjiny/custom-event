@@ -5,6 +5,7 @@ import Home from '../pages/Home';
 import About from '../pages/About';
 import Canvas from '../pages/Canvas';
 import Notice from '../pages/Notice';
+import Board from '../pages/Board';
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: 'notice',
         element: <Notice />,
+      },
+      {
+        path: 'board',
+        element: <Board />,
       },
     ],
   },
