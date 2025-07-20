@@ -35,13 +35,8 @@ export const getBoardById = async (id) => {
 // Create a new board
 export const createBoard = async (boardData, files) => {
   try {
-    // If no files are provided, use the standard JSON request
-    if (!files || files.length === 0) {
-      const response = await apiClient.post('/boards', boardData);
-      return response.data;
-    }
-
-    // Create a FormData object for multipart/form-data
+    // Always use FormData for consistency, even when no files are provided
+    // This ensures we always use multipart/form-data which the server expects
     const formData = new FormData();
 
     // Add the board data as a JSON string wrapped in a Blob
@@ -50,8 +45,10 @@ export const createBoard = async (boardData, files) => {
     }));
 
     // Add files if provided
-    for (let i = 0; i < files.length; i++) {
-      formData.append('files', files[i]);
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+      }
     }
 
     // Send the request with FormData

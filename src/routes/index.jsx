@@ -6,6 +6,7 @@ import About from '../pages/About';
 import Canvas from '../pages/Canvas';
 import Notice from '../pages/Notice';
 import Board from '../pages/Board';
+import DatabaseConfig from '../pages/DatabaseConfig';
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
       {
         path: 'board',
         element: <Board />,
+      },
+      {
+        path: 'database',
+        element: <DatabaseConfig />,
       },
     ],
   },

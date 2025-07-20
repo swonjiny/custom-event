@@ -39,6 +39,10 @@ const AppLayout = () => {
               key: '5',
               label: <Link to="/board">게시판</Link>,
             },
+            {
+              key: '6',
+              label: <Link to="/database">Database Config</Link>,
+            },
           ]}
         />
       </Header>

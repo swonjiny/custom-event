@@ -1,10 +1,128 @@
-import React from 'react';
-import { Modal, Typography, Divider, Spin, Descriptions, List, Card, Tag, Space, Table, Button, Tooltip } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Modal, Typography, Divider, Spin, Descriptions, List, Card, Tag, Space, Table, Button, Tooltip, message } from 'antd';
 import { FileOutlined, DownloadOutlined } from '@ant-design/icons';
+import CommentList from '../comment/CommentList';
+import { getCommentsByBoardId, createComment, updateComment, deleteComment } from '../../services/commentService';
+import { createReply, updateReply, deleteReply } from '../../services/replyService';
 
 const { Title, Text, Paragraph } = Typography;
 
-const BoardDetail = ({ board, open, onClose, loading = false }) => {
+const BoardDetail = ({ board, open, onClose, loading: boardLoading = false }) => {
+  const [comments, setComments] = useState([]);
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [refreshComments, setRefreshComments] = useState(false);
+
+  // Fetch comments when board changes or refresh is triggered
+  useEffect(() => {
+    if (board && board.boardId) {
+      fetchComments(board.boardId);
+    }
+  }, [board, refreshComments]);
+
+  // Fetch comments for the current board
+  const fetchComments = async (boardId) => {
+    try {
+      setCommentLoading(true);
+      const data = await getCommentsByBoardId(boardId);
+      setComments(data || []);
+    } catch (error) {
+      message.error('댓글을 불러오는데 실패했습니다.');
+      console.error('Failed to fetch comments:', error);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  // Add a new comment
+  const handleAddComment = async (commentData) => {
+    try {
+      setCommentLoading(true);
+      await createComment(commentData);
+      message.success('댓글이 추가되었습니다.');
+      setRefreshComments(!refreshComments); // Trigger refresh
+    } catch (error) {
+      message.error('댓글 추가에 실패했습니다.');
+      console.error('Failed to add comment:', error);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  // Edit an existing comment
+  const handleEditComment = async (commentId, commentData) => {
+    try {
+      setCommentLoading(true);
+      await updateComment(commentId, commentData);
+      message.success('댓글이 수정되었습니다.');
+      setRefreshComments(!refreshComments); // Trigger refresh
+    } catch (error) {
+      message.error('댓글 수정에 실패했습니다.');
+      console.error('Failed to edit comment:', error);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  // Delete a comment
+  const handleDeleteComment = async (commentId) => {
+    try {
+      setCommentLoading(true);
+      await deleteComment(commentId);
+      message.success('댓글이 삭제되었습니다.');
+      setRefreshComments(!refreshComments); // Trigger refresh
+    } catch (error) {
+      message.error('댓글 삭제에 실패했습니다.');
+      console.error('Failed to delete comment:', error);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  // Add a new reply to a comment
+  const handleAddReply = async (replyData) => {
+    try {
+      setCommentLoading(true);
+      await createReply(replyData);
+      message.success('답글이 추가되었습니다.');
+      setRefreshComments(!refreshComments); // Trigger refresh
+    } catch (error) {
+      message.error('답글 추가에 실패했습니다.');
+      console.error('Failed to add reply:', error);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  // Edit an existing reply
+  const handleEditReply = async (replyId, replyData) => {
+    try {
+      setCommentLoading(true);
+      await updateReply(replyId, replyData);
+      message.success('답글이 수정되었습니다.');
+      setRefreshComments(!refreshComments); // Trigger refresh
+    } catch (error) {
+      message.error('답글 수정에 실패했습니다.');
+      console.error('Failed to edit reply:', error);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  // Delete a reply
+  const handleDeleteReply = async (replyId) => {
+    try {
+      setCommentLoading(true);
+      await deleteReply(replyId);
+      message.success('답글이 삭제되었습니다.');
+      setRefreshComments(!refreshComments); // Trigger refresh
+    } catch (error) {
+      message.error('답글 삭제에 실패했습니다.');
+      console.error('Failed to delete reply:', error);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
   if (!board) return null;
 
   // Format date string
@@ -32,7 +150,7 @@ const BoardDetail = ({ board, open, onClose, loading = false }) => {
       width={800}
       destroyOnClose={false}
     >
-      <Spin spinning={loading} tip="로딩 중...">
+      <Spin spinning={boardLoading} tip="로딩 중...">
         <div className="board-detail">
           <Title level={3}>{board.title}</Title>
 
@@ -99,55 +217,17 @@ const BoardDetail = ({ board, open, onClose, loading = false }) => {
           )}
 
           {/* Comments Section */}
-          {board.comments && board.comments.length > 0 && (
-            <>
-              <Divider orientation="left">댓글 ({board.comments.length})</Divider>
-              <List
-                itemLayout="vertical"
-                dataSource={board.comments}
-                renderItem={comment => (
-                  <List.Item>
-                    <Card
-                      size="small"
-                      title={
-                        <Space>
-                          <Text strong>{comment.writer}</Text>
-                          <Text type="secondary" style={{ fontSize: '12px' }}>
-                            {formatDate(comment.createdDate)}
-                          </Text>
-                        </Space>
-                      }
-                    >
-                      <Paragraph>{comment.content}</Paragraph>
-
-                      {/* Replies Section */}
-                      {comment.replies && comment.replies.length > 0 && (
-                        <List
-                          itemLayout="horizontal"
-                          dataSource={comment.replies}
-                          renderItem={reply => (
-                            <List.Item style={{ paddingLeft: 24, borderLeft: '2px solid #f0f0f0' }}>
-                              <List.Item.Meta
-                                title={
-                                  <Space>
-                                    <Text strong>{reply.writer}</Text>
-                                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                                      {formatDate(reply.createdDate)}
-                                    </Text>
-                                  </Space>
-                                }
-                                description={reply.content}
-                              />
-                            </List.Item>
-                          )}
-                        />
-                      )}
-                    </Card>
-                  </List.Item>
-                )}
-              />
-            </>
-          )}
+          <CommentList
+            comments={comments}
+            boardId={board.boardId}
+            onAddComment={handleAddComment}
+            onEditComment={handleEditComment}
+            onDeleteComment={handleDeleteComment}
+            onAddReply={handleAddReply}
+            onEditReply={handleEditReply}
+            onDeleteReply={handleDeleteReply}
+            loading={commentLoading}
+          />
         </div>
       </Spin>
     </Modal>
