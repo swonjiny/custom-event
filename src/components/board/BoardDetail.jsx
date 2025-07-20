@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Typography, Divider, Spin, Descriptions, List, Card, Tag, Space, Table, Button, Tooltip, message } from 'antd';
 import { FileOutlined, DownloadOutlined } from '@ant-design/icons';
-import CommentList from '../comment/CommentList';
-import { getCommentsByBoardId, createComment, updateComment, deleteComment } from '../../services/commentService';
-import { createReply, updateReply, deleteReply } from '../../services/replyService';
+import NestedCommentList from '../comment/NestedCommentList';
+import {
+  getNestedCommentsByBoardId,
+  createComment,
+  createNestedComment,
+  updateComment,
+  deleteComment
+} from '../../services/commentService';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -19,11 +24,11 @@ const BoardDetail = ({ board, open, onClose, loading: boardLoading = false }) =>
     }
   }, [board, refreshComments]);
 
-  // Fetch comments for the current board
+  // Fetch nested comments for the current board
   const fetchComments = async (boardId) => {
     try {
       setCommentLoading(true);
-      const data = await getCommentsByBoardId(boardId);
+      const data = await getNestedCommentsByBoardId(boardId);
       setComments(data || []);
     } catch (error) {
       message.error('댓글을 불러오는데 실패했습니다.');
@@ -33,7 +38,7 @@ const BoardDetail = ({ board, open, onClose, loading: boardLoading = false }) =>
     }
   };
 
-  // Add a new comment
+  // Add a new top-level comment
   const handleAddComment = async (commentData) => {
     try {
       setCommentLoading(true);
@@ -78,46 +83,16 @@ const BoardDetail = ({ board, open, onClose, loading: boardLoading = false }) =>
     }
   };
 
-  // Add a new reply to a comment
-  const handleAddReply = async (replyData) => {
+  // Add a new nested comment (reply to another comment)
+  const handleAddNestedComment = async (commentData) => {
     try {
       setCommentLoading(true);
-      await createReply(replyData);
+      await createNestedComment(commentData);
       message.success('답글이 추가되었습니다.');
       setRefreshComments(!refreshComments); // Trigger refresh
     } catch (error) {
       message.error('답글 추가에 실패했습니다.');
-      console.error('Failed to add reply:', error);
-    } finally {
-      setCommentLoading(false);
-    }
-  };
-
-  // Edit an existing reply
-  const handleEditReply = async (replyId, replyData) => {
-    try {
-      setCommentLoading(true);
-      await updateReply(replyId, replyData);
-      message.success('답글이 수정되었습니다.');
-      setRefreshComments(!refreshComments); // Trigger refresh
-    } catch (error) {
-      message.error('답글 수정에 실패했습니다.');
-      console.error('Failed to edit reply:', error);
-    } finally {
-      setCommentLoading(false);
-    }
-  };
-
-  // Delete a reply
-  const handleDeleteReply = async (replyId) => {
-    try {
-      setCommentLoading(true);
-      await deleteReply(replyId);
-      message.success('답글이 삭제되었습니다.');
-      setRefreshComments(!refreshComments); // Trigger refresh
-    } catch (error) {
-      message.error('답글 삭제에 실패했습니다.');
-      console.error('Failed to delete reply:', error);
+      console.error('Failed to add nested comment:', error);
     } finally {
       setCommentLoading(false);
     }
@@ -217,15 +192,13 @@ const BoardDetail = ({ board, open, onClose, loading: boardLoading = false }) =>
           )}
 
           {/* Comments Section */}
-          <CommentList
+          <NestedCommentList
             comments={comments}
             boardId={board.boardId}
             onAddComment={handleAddComment}
             onEditComment={handleEditComment}
             onDeleteComment={handleDeleteComment}
-            onAddReply={handleAddReply}
-            onEditReply={handleEditReply}
-            onDeleteReply={handleDeleteReply}
+            onAddNestedComment={handleAddNestedComment}
             loading={commentLoading}
           />
         </div>

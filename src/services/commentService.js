@@ -11,7 +11,7 @@ const apiClient = axios.create({
 });
 
 /**
- * Create a new comment
+ * Create a new top-level comment
  * @param {Object} commentData - The comment data (boardId, writer, content)
  * @returns {Promise<Object>} - The created comment
  */
@@ -26,7 +26,22 @@ export const createComment = async (commentData) => {
 };
 
 /**
- * Get all comments for a specific board
+ * Create a new nested comment (reply to another comment)
+ * @param {Object} commentData - The comment data (boardId, parentCommentId, writer, content)
+ * @returns {Promise<Object>} - The created nested comment
+ */
+export const createNestedComment = async (commentData) => {
+  try {
+    const response = await apiClient.post('/comments/nested', commentData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating nested comment:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all comments for a specific board (flat structure)
  * @param {number} boardId - The ID of the board
  * @returns {Promise<Array>} - Array of comments
  */
@@ -41,9 +56,24 @@ export const getCommentsByBoardId = async (boardId) => {
 };
 
 /**
- * Get a specific comment by ID
+ * Get all comments for a specific board in a nested hierarchical structure
+ * @param {number} boardId - The ID of the board
+ * @returns {Promise<Array>} - Array of comments with nested children
+ */
+export const getNestedCommentsByBoardId = async (boardId) => {
+  try {
+    const response = await apiClient.get(`/comments/board/${boardId}/nested`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching nested comments for board ${boardId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Get a specific comment by ID with its nested children
  * @param {number} commentId - The ID of the comment
- * @returns {Promise<Object>} - The comment
+ * @returns {Promise<Object>} - The comment with its nested children
  */
 export const getCommentById = async (commentId) => {
   try {

@@ -12,9 +12,17 @@ const { TextArea } = Input;
  * @param {Object} props.initialValues - Initial values for the form (for editing)
  * @param {boolean} props.isEdit - Whether the form is for editing a comment
  * @param {number} props.boardId - ID of the board the comment belongs to
+ * @param {number} props.parentCommentId - ID of the parent comment (for nested comments)
  * @param {boolean} props.loading - Whether the form is in a loading state
  */
-const CommentForm = ({ onSubmit, initialValues = {}, isEdit = false, boardId, loading = false }) => {
+const CommentForm = ({
+  onSubmit,
+  initialValues = {},
+  isEdit = false,
+  boardId,
+  parentCommentId = null,
+  loading = false
+}) => {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,8 +46,13 @@ const CommentForm = ({ onSubmit, initialValues = {}, isEdit = false, boardId, lo
       // Create comment data object
       const commentData = {
         ...values,
-        boardId: boardId, // Add boardId for new comments
+        boardId: boardId, // Add boardId for all comments
       };
+
+      // Add parentCommentId for nested comments
+      if (parentCommentId && !isEdit) {
+        commentData.parentCommentId = parentCommentId;
+      }
 
       // Call the onSubmit function passed from parent
       await onSubmit(commentData);
