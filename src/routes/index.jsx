@@ -7,11 +7,14 @@ import Canvas from '../pages/Canvas';
 import Notice from '../pages/Notice';
 import Board from '../pages/Board';
 import DatabaseConfig from '../pages/DatabaseConfig';
+import ScreenLayoutPage from '../pages/ScreenLayoutPage';
+import ErrorPage from '../pages/ErrorPage';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <AppLayout />,
+    errorElement: <ErrorPage />,
     children: [
       {
         index: true,
@@ -36,6 +39,10 @@ const router = createBrowserRouter([
       {
         path: 'database',
         element: <DatabaseConfig />,
+      },
+      {
+        path: 'screen-layout',
+        element: <ScreenLayoutPage />,
       },
     ],
   },

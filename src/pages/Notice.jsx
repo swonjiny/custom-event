@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Button, Modal, Form, message, Spin } from 'antd';
-import { PlusOutlined, NotificationOutlined } from '@ant-design/icons';
+import { Typography, Button, Modal, Form, message, Spin, Divider, Row, Col } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 
 // Import components
 import NoticeList from '../components/notice/NoticeList';
 import NoticeForm from '../components/notice/NoticeForm';
-import NoticeDetail from '../components/notice/NoticeDetail';
+import TabsNoticeDetail from '../components/notice/TabsNoticeDetail';
 
 // Import API services
 import { getNotices, createNotice, updateNotice, deleteNotice, getNoticeById } from '../services/noticeService';
@@ -14,21 +14,17 @@ const { Title } = Typography;
 
 const Notice = () => {
   const [notices, setNotices] = useState([]);
-  const [isListModalVisible, setIsListModalVisible] = useState(false);
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
-  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [editingNotice, setEditingNotice] = useState(null);
-  const [selectedNotice, setSelectedNotice] = useState(null);
+  const [openNotices, setOpenNotices] = useState([]);
   const [form] = Form.useForm();
   const [editorContent, setEditorContent] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Fetch notices when component mounts or list modal is opened
+  // Fetch notices when component mounts
   useEffect(() => {
-    if (isListModalVisible) {
-      fetchNotices();
-    }
-  }, [isListModalVisible]);
+    fetchNotices();
+  }, []);
 
   // Fetch all notices from API
   const fetchNotices = async () => {
@@ -44,21 +40,17 @@ const Notice = () => {
     }
   };
 
-  const showListModal = () => {
-    setIsListModalVisible(true);
-  };
-
-  const hideListModal = () => {
-    setIsListModalVisible(false);
-  };
-
-  const showDetailModal = async (notice) => {
+  // Open a notice in a tab
+  const openNoticeTab = async (notice) => {
     try {
       setLoading(true);
       // Fetch the latest notice data from the API
       const latestNotice = await getNoticeById(notice.id);
-      setSelectedNotice(latestNotice);
-      setIsDetailModalVisible(true);
+
+      // Check if the notice is already open in a tab
+      if (!openNotices.some(n => n.id === latestNotice.id)) {
+        setOpenNotices([...openNotices, latestNotice]);
+      }
     } catch (error) {
       message.error('공지사항 상세 정보를 불러오는데 실패했습니다.');
       console.error('Failed to fetch notice details:', error);
@@ -67,10 +59,12 @@ const Notice = () => {
     }
   };
 
-  const hideDetailModal = () => {
-    setIsDetailModalVisible(false);
+  // Close a notice tab
+  const closeNoticeTab = (noticeId) => {
+    setOpenNotices(openNotices.filter(notice => notice.id !== parseInt(noticeId)));
   };
 
+  // Show form modal for adding/editing a notice
   const showFormModal = (notice = null) => {
     setEditingNotice(notice);
     setIsFormModalVisible(true);
@@ -86,11 +80,13 @@ const Notice = () => {
     }
   };
 
+  // Handle form modal cancel
   const handleFormCancel = () => {
     setIsFormModalVisible(false);
     form.resetFields();
   };
 
+  // Handle form submission
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -126,6 +122,7 @@ const Notice = () => {
     }
   };
 
+  // Handle notice deletion
   const handleDelete = (id) => {
     Modal.confirm({
       title: '공지사항 삭제',
@@ -135,6 +132,10 @@ const Notice = () => {
           setLoading(true);
           await deleteNotice(id);
           message.success('공지사항이 삭제되었습니다.');
+
+          // Remove from open tabs if it's open
+          setOpenNotices(openNotices.filter(notice => notice.id !== id));
+
           // Refresh the notices list
           fetchNotices();
         } catch (error) {
@@ -147,75 +148,65 @@ const Notice = () => {
     });
   };
 
-
-
   return (
-    <div style={{ padding: '20px', background: '#fff', maxWidth: '1200px', width: '100%', textAlign: 'center' }}>
-      <Button
-        type="primary"
-        icon={<NotificationOutlined />}
-        onClick={showListModal}
-        size="large"
-      >
-        공지사항 보기
-      </Button>
-
-      {/* Main Notice List Modal */}
-      <Modal
-        title="공지사항"
-        open={isListModalVisible}
-        onCancel={hideListModal}
-        footer={null}
-        width={1000}
-        destroyOnClose={false}
-      >
-        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Title level={3}>공지사항 목록</Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => showFormModal()}
-          >
-            새 공지사항
-          </Button>
-        </div>
-
-        <Spin spinning={loading} tip="로딩 중...">
-          <NoticeList
-            notices={notices}
-            onEdit={showFormModal}
-            onDelete={handleDelete}
-            onViewDetail={showDetailModal}
-          />
-        </Spin>
-
-        {/* Nested Form Modal for Adding/Editing Notices */}
-        <Modal
-          title={editingNotice ? "공지사항 수정" : "새 공지사항"}
-          open={isFormModalVisible}
-          onOk={handleSubmit}
-          onCancel={handleFormCancel}
-          width={800}
-          destroyOnClose={false}
-          confirmLoading={loading}
+    <div style={{ padding: '20px', background: '#fff', maxWidth: '1200px', width: '100%' }}>
+      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={2}>공지사항</Title>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => showFormModal()}
         >
-          <Spin spinning={loading} tip="처리 중...">
-            <NoticeForm
-              form={form}
-              editorContent={editorContent}
-              setEditorContent={setEditorContent}
+          새 공지사항
+        </Button>
+      </div>
+
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <Spin spinning={loading} tip="로딩 중...">
+            <NoticeList
+              notices={notices}
+              onEdit={showFormModal}
+              onDelete={handleDelete}
+              onViewDetail={openNoticeTab}
             />
           </Spin>
-        </Modal>
-      </Modal>
+        </Col>
+      </Row>
 
-      {/* Detail View Modal */}
-      <NoticeDetail
-        notice={selectedNotice}
-        open={isDetailModalVisible}
-        onClose={hideDetailModal}
-        loading={loading}
-      />
+      {openNotices.length > 0 && (
+        <>
+          <Divider />
+          <Row gutter={[16, 16]}>
+            <Col span={24}>
+              <TabsNoticeDetail
+                openNotices={openNotices}
+                onCloseNotice={closeNoticeTab}
+                loading={loading}
+              />
+            </Col>
+          </Row>
+        </>
+      )}
+
+      {/* Form Modal for Adding/Editing Notices */}
+      <Modal
+        title={editingNotice ? "공지사항 수정" : "새 공지사항"}
+        open={isFormModalVisible}
+        onOk={handleSubmit}
+        onCancel={handleFormCancel}
+        width={800}
+        destroyOnClose={false}
+        confirmLoading={loading}
+      >
+        <Spin spinning={loading} tip="처리 중...">
+          <NoticeForm
+            form={form}
+            editorContent={editorContent}
+            setEditorContent={setEditorContent}
+          />
+        </Spin>
+      </Modal>
     </div>
   );
 };
