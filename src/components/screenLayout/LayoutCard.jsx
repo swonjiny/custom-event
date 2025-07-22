@@ -6,7 +6,10 @@ import {
   ColumnWidthOutlined,
   ColumnHeightOutlined,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  ArrowsAltOutlined,
+  ShrinkOutlined as ShrinkHorizontalOutlined,
+  CloseOutlined
 } from '@ant-design/icons';
 
 /**
@@ -19,10 +22,13 @@ import {
  * @param {boolean} props.verticalCollapse - Whether the card is collapsed vertically
  * @param {boolean} props.titleOnly - Whether only the title is shown
  * @param {boolean} props.expanded - Whether the card is expanded
+ * @param {boolean} props.horizontalExpand - Whether the card is expanded horizontally (about 2x width)
  * @param {Function} props.onToggleHorizontalCollapse - Function to toggle horizontal collapse
  * @param {Function} props.onToggleVerticalCollapse - Function to toggle vertical collapse
  * @param {Function} props.onToggleTitleOnly - Function to toggle title-only mode
  * @param {Function} props.onToggleExpanded - Function to toggle expanded mode
+ * @param {Function} props.onToggleHorizontalExpand - Function to toggle horizontal expansion
+ * @param {Function} props.onRemove - Function to remove the card from the layout
  * @param {React.ReactNode} props.children - The card content
  */
 const LayoutCard = ({
@@ -32,10 +38,13 @@ const LayoutCard = ({
   verticalCollapse = false,
   titleOnly = false,
   expanded = false,
+  horizontalExpand = false,
   onToggleHorizontalCollapse,
   onToggleVerticalCollapse,
   onToggleTitleOnly,
   onToggleExpanded,
+  onToggleHorizontalExpand,
+  onRemove,
   children
 }) => {
   // Calculate card dimensions based on state
@@ -44,9 +53,14 @@ const LayoutCard = ({
     const style = {
       margin: '8px',
       transition: 'all 0.3s ease',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      borderRadius: '8px',
+      backgroundColor: '#fff',
+      zIndex: 2,
+      position: 'relative',
     };
 
-    // Apply horizontal collapse
+    // Apply horizontal collapse or expand
     if (horizontalCollapse) {
       style.width = '120px';
       style.overflow = 'hidden';
@@ -57,6 +71,10 @@ const LayoutCard = ({
       style.zIndex = 10;
       style.top = 0;
       style.left = 0;
+    } else if (horizontalExpand) {
+      // Expand to about twice the normal width
+      style.width = '200%';
+      style.zIndex = 5; // Higher than normal but lower than full-screen expanded
     } else {
       style.width = '100%';
     }
@@ -98,23 +116,53 @@ const LayoutCard = ({
       />
       <Button
         type="text"
+        icon={horizontalExpand ? <ShrinkHorizontalOutlined /> : <ArrowsAltOutlined />}
+        onClick={onToggleHorizontalExpand}
+        size="small"
+        title={horizontalExpand ? "Shrink width" : "Expand width (2x)"}
+      />
+      <Button
+        type="text"
         icon={expanded ? <ShrinkOutlined /> : <ExpandAltOutlined />}
         onClick={onToggleExpanded}
         size="small"
         title={expanded ? "Shrink" : "Expand"}
       />
+      {onRemove && (
+        <Button
+          type="text"
+          danger
+          icon={<CloseOutlined />}
+          onClick={onRemove}
+          size="small"
+          title="Remove panel"
+        />
+      )}
     </Space>
   );
 
   return (
-    <Card
-      title={title}
-      extra={extra}
-      style={getCardStyle()}
-      className={`layout-card layout-card-${position.toLowerCase()}`}
-    >
-      {!titleOnly && children}
-    </Card>
+    <>
+      <style>
+        {`
+          .layout-card {
+            transition: all 0.3s ease;
+          }
+          .layout-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+            transform: translateY(-2px);
+          }
+        `}
+      </style>
+      <Card
+        title={title}
+        extra={extra}
+        style={getCardStyle()}
+        className={`layout-card layout-card-${position.toLowerCase()}`}
+      >
+        {!titleOnly && children}
+      </Card>
+    </>
   );
 };
 

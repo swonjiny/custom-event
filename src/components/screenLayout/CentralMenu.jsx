@@ -123,7 +123,7 @@ const CentralMenu = ({
   return (
     <>
       <Card
-        title={menuVisible ? "Central Menu" : null}
+        title={menuVisible ? "하단 패널" : null}
         extra={menuVisible ? extra : null}
         style={getMenuStyle()}
         bodyStyle={getContentStyle()}
