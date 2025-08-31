@@ -9,6 +9,7 @@ import Board from '../pages/Board';
 import DatabaseConfig from '../pages/DatabaseConfig';
 import ScreenLayoutPage from '../pages/ScreenLayoutPage';
 import ErrorPage from '../pages/ErrorPage';
+import PopupWindow from '../pages/PopupWindow';
 
 const router = createBrowserRouter([
   {
@@ -45,6 +46,11 @@ const router = createBrowserRouter([
         element: <ScreenLayoutPage />,
       },
     ],
+  },
+  {
+    path: '/popup',
+    element: <PopupWindow />,
+    errorElement: <ErrorPage />,
   },
 ]);
 

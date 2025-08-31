@@ -94,7 +94,8 @@ const Canvas = () => {
         panels: {
           left: showLeftPanel ? 'Visible' : 'Hidden',
           right: showRightPanel ? 'Visible' : 'Hidden'
-        }
+        },
+        tooltipShape
       }
     };
 
@@ -109,7 +110,17 @@ const Canvas = () => {
       content
     });
     canvasRef.current.dispatchEvent(tooltipEvent);
-  }, [showCircles, circleCount, showLeftPanel, showRightPanel, activeAreaSize, showTooltip]);
+
+    // Dispatch global event so Layout can forward to popups
+    try {
+      window.dispatchEvent(new CustomEvent('canvasSelection', { detail: { ...content, activeArea: {
+        x: x - activeAreaSize / 2,
+        y: y - activeAreaSize / 2,
+        width: activeAreaSize,
+        height: activeAreaSize,
+      } } }));
+    } catch { /* ignore */ 0; }
+  }, [showCircles, circleCount, showLeftPanel, showRightPanel, activeAreaSize, showTooltip, tooltipShape]);
 
   const handleMouseMove = useCallback((e) => {
     // Clear timeout when mouse moves
@@ -220,6 +231,27 @@ const Canvas = () => {
   const toggleLeftPanel = () => setShowLeftPanel(!showLeftPanel);
   const toggleRightPanel = () => setShowRightPanel(!showRightPanel);
   const toggleSettingsList = () => setShowSettingsList(!showSettingsList);
+
+  // Broadcast canvas settings to popup via Layout bridge
+  useEffect(() => {
+    const payload = { showCircles, circleCount, activeAreaSize, tooltipShape };
+    try {
+      window.dispatchEvent(new CustomEvent('canvasState', { detail: payload }));
+    } catch { /* ignore */ 0; }
+  }, [showCircles, circleCount, activeAreaSize, tooltipShape]);
+
+  // Apply updates from popup control panel
+  useEffect(() => {
+    const handler = (e) => {
+      const p = e?.detail || {};
+      if (typeof p.showCircles === 'boolean') setShowCircles(p.showCircles);
+      if (typeof p.circleCount === 'number') setCircleCount(p.circleCount);
+      if (typeof p.activeAreaSize === 'number') setActiveAreaSize(p.activeAreaSize);
+      if (typeof p.tooltipShape === 'string') setTooltipShape(p.tooltipShape);
+    };
+    window.addEventListener('applyCanvasControl', handler);
+    return () => window.removeEventListener('applyCanvasControl', handler);
+  }, []);
 
   // Reset canvas settings
   const resetCanvas = () => {
